@@ -83,10 +83,13 @@
     }
 
     // ── Keyboard listener (capture phase) ──────────────────────────────────
+    // Uses e.code (physical key) instead of e.key (character) to avoid
+    // macOS dead key issue: Option+N in English mode produces ˜ (tilde accent),
+    // making e.key === 'Dead' instead of 'N'.
     document.addEventListener(
         'keydown',
         (e) => {
-            if (e.altKey && e.shiftKey && (e.key === 'N' || e.key === 'n')) {
+            if (e.altKey && e.shiftKey && e.code === 'KeyN') {
                 e.preventDefault();
                 e.stopPropagation();
                 e.stopImmediatePropagation();

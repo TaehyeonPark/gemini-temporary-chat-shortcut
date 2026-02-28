@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Gemini Temporary Chat Shortcut",
-    "description": "Adds Cmd+Shift+N (macOS) / Ctrl+Shift+N (Windows/Linux) shortcut to open Gemini temporary chat",
+    "description": "Adds Option+Shift+N (macOS) / Alt+Shift+N (Windows/Linux) shortcut to open Gemini temporary chat",
     "version": "1.0.0",
     "icons": {
         "16": "icons/icon16.png",
