@@ -10,9 +10,21 @@
 (() => {
     'use strict';
 
-    // ── Selectors (based on Gemini's data-test-id attributes) ──────────────
+    // ── Selectors ──────────────────────────────────────────────────────────
+    // Gemini's DOM has changed multiple times; try selectors in priority order
+    // and fall back to older variants so the extension keeps working across
+    // UI revisions.
+    const TEMP_CHAT_BUTTON_SELECTORS = [
+        // Current (2026-05): <temp-chat-button> custom element wraps the button
+        'temp-chat-button button',
+        // Icon-based fallbacks in case the wrapper element is renamed
+        'button:has(mat-icon[fonticon="gemini_chat_temp"])',
+        'button:has(mat-icon[data-mat-icon-name="gemini_chat_temp"])',
+        // Legacy data-test-id (pre-2026 UI)
+        'button[data-test-id="temp-chat-button"]',
+    ];
+
     const SELECTORS = {
-        TEMP_CHAT_BUTTON: 'button[data-test-id="temp-chat-button"]',
         NAV_HAMBURGER: 'button[data-test-id="side-nav-menu-button"]',
         SIDE_NAV_CONTAINER: '.sidenav-with-history-container',
     };
@@ -21,18 +33,32 @@
     const ELEMENT_POLL_INTERVAL_MS = 150;
     const ELEMENT_POLL_TIMEOUT_MS = 3000;
 
-    // ── Utility: poll for an element until it appears ──────────────────────
-    function waitForElement(selector, timeoutMs = ELEMENT_POLL_TIMEOUT_MS) {
-        return new Promise((resolve, reject) => {
-            const existing = document.querySelector(selector);
-            if (existing && existing.offsetParent !== null) {
-                return resolve(existing);
+    // ── Utility: find first visible match from a list of selectors ─────────
+    function findVisible(selectors) {
+        for (const selector of selectors) {
+            let el;
+            try {
+                el = document.querySelector(selector);
+            } catch {
+                // :has() may not be supported on older browsers — skip silently
+                continue;
             }
+            if (el && el.offsetParent !== null) return el;
+        }
+        return null;
+    }
+
+    // ── Utility: poll for an element until it appears ──────────────────────
+    function waitForElement(selectorOrList, timeoutMs = ELEMENT_POLL_TIMEOUT_MS) {
+        const selectors = Array.isArray(selectorOrList) ? selectorOrList : [selectorOrList];
+        return new Promise((resolve, reject) => {
+            const existing = findVisible(selectors);
+            if (existing) return resolve(existing);
 
             let elapsed = 0;
             const interval = setInterval(() => {
-                const el = document.querySelector(selector);
-                if (el && el.offsetParent !== null) {
+                const el = findVisible(selectors);
+                if (el) {
                     clearInterval(interval);
                     resolve(el);
                     return;
@@ -40,7 +66,7 @@
                 elapsed += ELEMENT_POLL_INTERVAL_MS;
                 if (elapsed >= timeoutMs) {
                     clearInterval(interval);
-                    reject(new Error(`Element not found: ${selector}`));
+                    reject(new Error(`Element not found: ${selectors.join(', ')}`));
                 }
             }, ELEMENT_POLL_INTERVAL_MS);
         });
@@ -66,13 +92,16 @@
 
     // ── Click the temporary chat button ────────────────────────────────────
     async function activateTemporaryChat() {
-        let button = document.querySelector(SELECTORS.TEMP_CHAT_BUTTON);
+        let button = findVisible(TEMP_CHAT_BUTTON_SELECTORS);
 
-        if (!button || button.offsetParent === null) {
+        if (!button) {
+            // In the legacy UI the button lived inside the collapsible
+            // sidebar; the current UI shows it in the chat header, but
+            // keep this fallback in case Gemini reverts.
             await ensureSidebarExpanded();
 
             try {
-                button = await waitForElement(SELECTORS.TEMP_CHAT_BUTTON);
+                button = await waitForElement(TEMP_CHAT_BUTTON_SELECTORS);
             } catch (err) {
                 console.warn('[Gemini Shortcut] Could not find temporary chat button.');
                 return;
