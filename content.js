@@ -1,8 +1,10 @@
 /**
  * Gemini Temporary Chat Shortcut
  *
- * Option+Shift+N (macOS) / Alt+Shift+N (Windows/Linux) keyboard shortcut
- * to open a temporary chat on gemini.google.com.
+ * Opens a temporary chat on gemini.google.com when triggered by the
+ * `activate-temp-chat` command. The shortcut itself is registered via
+ * the chrome.commands API (see manifest.json + background.js), so users
+ * can rebind it from chrome://extensions/shortcuts.
  *
  * This content script runs ONLY on gemini.google.com.
  */
@@ -111,20 +113,11 @@
         button.click();
     }
 
-    // ── Keyboard listener (capture phase) ──────────────────────────────────
-    // Uses e.code (physical key) instead of e.key (character) to avoid
-    // macOS dead key issue: Option+N in English mode produces ˜ (tilde accent),
-    // making e.key === 'Dead' instead of 'N'.
-    document.addEventListener(
-        'keydown',
-        (e) => {
-            if (e.altKey && e.shiftKey && e.code === 'KeyN') {
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
-                activateTemporaryChat();
-            }
-        },
-        { capture: true }
-    );
+    // ── Listen for activation from the background service worker ───────────
+    chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
+        if (msg?.type === 'activate-temp-chat') {
+            activateTemporaryChat();
+            sendResponse({ ok: true });
+        }
+    });
 })();
