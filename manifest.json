@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Gemini Temporary Chat Shortcut",
-    "description": "Open Gemini temporary chat instantly with Option+Shift+G (macOS) / Alt+Shift+G (Windows/Linux). Rebindable from chrome://extensions/shortcuts. No data collected.",
+    "description": "Open Gemini's temporary chat with Option+Shift+G (macOS) / Alt+Shift+G (Win/Linux). Rebindable. No data collected.",
     "homepage_url": "https://github.com/TaehyeonPark/gemini-temporary-chat-shortcut",
     "version": "1.0.2",
     "icons": {
