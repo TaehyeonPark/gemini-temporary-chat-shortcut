@@ -12,7 +12,7 @@
     "content_scripts": [
         {
             "matches": [
-                "*://*.gemini.google.com/*"
+                "https://gemini.google.com/*"
             ],
             "js": [
                 "content.js"
